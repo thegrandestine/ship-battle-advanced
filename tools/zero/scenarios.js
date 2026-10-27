@@ -198,7 +198,7 @@ function lopsided(rng, st) {
 
 // Training families and their shares (the rest of a draw is the standard game).
 // Plain games: the game's Standard preset (a mirrored 0-20 fleet, 0-20 money), with this share
-// of them the Classic empty board, which a pair of fixed openings turns into a coin toss.
+// of them (default) the Classic empty board, which a pair of fixed openings turns into a coin toss.
 const CLASSIC_SHARE = 0.25;
 export const TRAIN_FAMILIES = {
     jitter: 0.12,   // nudged ship stats and prime prices
@@ -214,12 +214,12 @@ export const TRAIN_FAMILIES = {
     chaos: 0.06,    // the Chaos preset's roll: 2-4 knobs anywhere on their sliders, extremes included
 };
 
-/** A training scenario; `std` = chance of a plain (Standard or Classic) game. Returns { start, family }. */
-export function trainingScenario(rng, std = 0.25) {
+/** A training scenario; `std` = chance of a plain game, `classic` = share of those on the Classic board. Returns { start, family }. */
+export function trainingScenario(rng, std = 0.25, classic = CLASSIC_SHARE) {
     resetRules();
     const st = standardStart();
     if (rng() < std) {
-        if (rng() < CLASSIC_SHARE) return { start: st, family: 'classic' };
+        if (rng() < classic) return { start: st, family: 'classic' };
         const start = preset(standardMods(rng), rng);
         clearMemos();
         return { start, family: 'standard' };
