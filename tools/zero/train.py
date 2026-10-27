@@ -176,6 +176,7 @@ def main():
     ap.add_argument('--games', type=int, default=2000)
     ap.add_argument('--std', type=float, default=0.3)
     ap.add_argument('--classic', type=float, default=0.25, help='share of plain games on the Classic board (the rest roll Standard)')
+    ap.add_argument('--focus', default='', help='family:share, e.g. midgame:0.4: that share of games goes to one family (experiments)')
     ap.add_argument('--ppool', type=float, default=0.2)
     ap.add_argument('--pgm', type=float, default=0, help='share of games vs grandmaster v1.2 (slow)')
     ap.add_argument('--open', type=int, default=3)
@@ -244,7 +245,7 @@ def main():
         for attempt in range(3):  # (a retry survives game files being edited mid-run)
             r = node(['tools/zero/selfplay.js', '--net', net_path, '--games', str(args.games), '--out', data,
                       '--pool', ','.join(pool_paths), '--ppool', str(args.ppool if pool_paths else 0), '--pgm', str(args.pgm),
-                      '--std', str(args.std), '--classic', str(args.classic), '--open', str(args.open), '--seed', str(it), '--threads', str(args.threads)])
+                      '--std', str(args.std), '--classic', str(args.classic), *(['--focus', args.focus] if args.focus else []), '--open', str(args.open), '--seed', str(it), '--threads', str(args.threads)])
             if not r.returncode:
                 break
             print(r.stdout, r.stderr, flush=True)

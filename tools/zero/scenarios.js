@@ -189,6 +189,23 @@ function chaos(rng, st) {
     Object.assign(st, preset(chaosMods(rng), rng));
 }
 
+/**
+ * A developed mid-game, as if the match began on turn 40-60 between two built-up sides: a
+ * mirrored fleet worth 20-100 across both halves, with the income, ore and money to keep buying
+ * tier 2-3 ships. Calibrated just past what Alpha 0.81's own games reach by then (median fleet
+ * value 17, biggest ship #7, income 7, ore 16; 90th percentile 60, #14, 16, 78): strong twins
+ * grind small-ship wars, so boards like this almost never arise in self-play.
+ */
+function midgame(rng, st) {
+    const { pick, uni } = tools(rng);
+    const logU = (lo, hi) => Math.exp(uni(Math.log(lo), Math.log(hi)));
+    st.fleet = randomFleet(rng, Math.round(logU(20, 100)), [1, 2, 2, 3, 3, 4, 5]);
+    st.income = Array(2).fill(Math.round(uni(8, 20)));
+    st.ore = Array(2).fill(Math.round(logU(30, 150)));
+    st.money = Array(2).fill(Math.round(logU(20, 100)));
+    st.hp = Array(2).fill(pick([80, 120, 160, 200]));
+}
+
 function lopsided(rng, st) {
     const { pick } = tools(rng);
     const s = rng() < 0.5 ? 0 : 1;
@@ -212,21 +229,31 @@ export const TRAIN_FAMILIES = {
     variant: 0.06,  // a little juggernaut (ship hp ×3-5) and glass (×0.25-0.4)
     bank: 0.06,     // cash in hand, income 1-3, pricier traders
     chaos: 0.06,    // the Chaos preset's roll: 2-4 knobs anywhere on their sliders, extremes included
+    midgame: 0,     // a developed turn 40-60 mirror (off by default: experiment, see --focus)
 };
 
-/** A training scenario; `std` = chance of a plain game, `classic` = share of those on the Classic board. Returns { start, family }. */
-export function trainingScenario(rng, std = 0.25, classic = CLASSIC_SHARE) {
+/**
+ * A training scenario; `std` = chance of a plain game, `classic` = share of those on the Classic
+ * board, `focus` = { family, share }: that share of all games goes to one family first (for
+ * experiments). Returns { start, family }.
+ */
+export function trainingScenario(rng, std = 0.25, classic = CLASSIC_SHARE, focus = null) {
     resetRules();
     const st = standardStart();
-    if (rng() < std) {
+    let family;
+    if (focus && rng() < focus.share) family = focus.family;
+    else if (rng() < std) {
         if (rng() < classic) return { start: st, family: 'classic' };
         const start = preset(standardMods(rng), rng);
         clearMemos();
         return { start, family: 'standard' };
     }
-    const fams = Object.entries(TRAIN_FAMILIES);
-    let r = rng() * fams.reduce((a, [, w]) => a + w, 0), family = fams[0][0];
-    for (const [f, w] of fams) { if (r < w) { family = f; break; } r -= w; }
+    if (!family) {
+        const fams = Object.entries(TRAIN_FAMILIES);
+        let r = rng() * fams.reduce((a, [, w]) => a + w, 0);
+        family = fams[0][0];
+        for (const [f, w] of fams) { if (r < w) { family = f; break; } r -= w; }
+    }
     const other = () => tools(rng).pick(['midfight', 'rich', 'econ', 'wide', 'long', 'mirror']);
     const parts = family === 'combo' ? ['jitter', other()] : [family];
     for (const p of parts) {
@@ -240,6 +267,7 @@ export function trainingScenario(rng, std = 0.25, classic = CLASSIC_SHARE) {
         else if (p === 'variant') variant(rng, st);
         else if (p === 'bank') bank(rng, st);
         else if (p === 'chaos') chaos(rng, st);
+        else if (p === 'midgame') midgame(rng, st);
     }
     if (rng() < 0.15) lopsided(rng, st);
     clearMemos();
@@ -261,7 +289,7 @@ function preset(mods, rng) {
 }
 
 /** 'near' tests are fresh draws from what training sees; 'far' ones it never trains on. */
-export const NEAR = ['standard', 'classic', 'midfight', 'econ', 'jitter', 'wide', 'mirror', 'fortress', 'glass', 'juggernaut', 'bank', 'chaos'];
+export const NEAR = ['standard', 'classic', 'midgame', 'midfight', 'econ', 'jitter', 'wide', 'mirror', 'fortress', 'glass', 'juggernaut', 'bank', 'chaos'];
 
 // Held-out tests. Presets are the game's own New Game options, mostly far more extreme than
 // anything in training; 'midfight' and 'econ' are fresh draws from training families.
@@ -274,6 +302,7 @@ export const EVAL_SCENARIOS = {
     jitter: rng => { resetRules(); jitterRules(rng); clearMemos(); return standardStart(); },
     wide: rng => { resetRules(); const st = standardStart(); wide(rng, st); clearMemos(); return st; },
     mirror: rng => { resetRules(); const st = standardStart(); mirror(rng, st); clearMemos(); return st; },
+    midgame: rng => { resetRules(); const st = standardStart(); midgame(rng, st); clearMemos(); return st; },
     chaos: rng => { resetRules(); const st = standardStart(); chaos(rng, st); clearMemos(); return st; },
     bank: rng => { resetRules(); const st = standardStart(); bank(rng, st); clearMemos(); return st; },
     fortress: () => { resetRules(); const st = standardStart(); st.hp = [400, 400]; return st; },

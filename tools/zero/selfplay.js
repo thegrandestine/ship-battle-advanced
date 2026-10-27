@@ -1,6 +1,6 @@
 // Self-play games for Zero (js/zero.js), written out as training data for tools/zero/train.py.
 //   node tools/zero/selfplay.js --net net.json --games 2000 --out data/it0001 [--pool a.json,b.json]
-//        [--ppool 0.2] [--pgm 0] [--draw 0.5] [--std 0.25] [--classic 0.25] [--open 3] [--max 200] [--seed 1] [--threads N] [--temp 1]
+//        [--ppool 0.2] [--pgm 0] [--draw 0.5] [--std 0.25] [--classic 0.25] [--focus family:share] [--open 3] [--max 200] [--seed 1] [--threads N] [--temp 1]
 // Both sides are the current net unless a game draws a past snapshot from --pool as one side's
 // opponent (chance --ppool), or grandmaster v1.2 (chance --pgm: slow, ~7s a game, so keep it to
 // a few percent; its thinking is capped at --gm-ms per move, 150 by default, v1.2 otherwise); then only the current net's moves are kept. Each game's first
@@ -43,7 +43,7 @@ function adjudicate(S) {
 /** One game. Returns { samples, info }; each sample keeps its encoding plus PPO bookkeeping. */
 function playGame(seed, nets, opt) {
     const rng = mulberry32(seed);
-    const { start, family } = trainingScenario(rng, opt.std, opt.classic);
+    const { start, family } = trainingScenario(rng, opt.std, opt.classic, opt.focus);
     const T = typeTable();
     const S = newSimState();
     applyStart(S, start);
@@ -166,7 +166,9 @@ if (!isMainThread) {
     const seed0 = Number(flag('--seed', 1));
     const threads = Math.min(games, Number(flag('--threads', Math.max(1, os.cpus().length - 1))));
     const opt = {
-        ppool: Number(flag('--ppool', 0.2)), pgm: Number(flag('--pgm', 0)), gmMs: Number(flag('--gm-ms', 150)), draw: Number(flag('--draw', 0.5)), std: Number(flag('--std', 0.25)), classic: Number(flag('--classic', 0.25)), open: Number(flag('--open', 3)),
+        ppool: Number(flag('--ppool', 0.2)), pgm: Number(flag('--pgm', 0)), gmMs: Number(flag('--gm-ms', 150)), draw: Number(flag('--draw', 0.5)), std: Number(flag('--std', 0.25)), classic: Number(flag('--classic', 0.25)),
+        // --focus family:share sends that share of games to one training family first (experiments)
+        focus: (f => (f ? { family: f.split(':')[0], share: Number(f.split(':')[1]) } : null))(flag('--focus', '')), open: Number(flag('--open', 3)),
         max: Number(flag('--max', 200)), temp: Number(flag('--temp', 1)),
     };
     const seeds = Array.from({ length: games }, (_, i) => seed0 * 1000003 + i);
