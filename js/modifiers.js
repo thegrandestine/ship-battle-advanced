@@ -69,8 +69,6 @@ export const PRESETS = {
 
 const ORIGINAL = Object.fromEntries(SHIP_NUMS.map(n => [n, { attack: TEMPLATES[n].attack, health: TEMPLATES[n].health }]));
 
-const pick = a => a[Math.floor(Math.random() * a.length)];
-
 /** A random mix of modifiers (any of the allowed values, extremes included). */
 export function chaosMods(rng = Math.random) {
     const pick = a => a[Math.floor(rng() * a.length)]; // rng: seeded in training (tools/zero/scenarios.js)
@@ -151,20 +149,31 @@ export function applyBalanceMods(mods) {
 const FLEET_SHIPS = SHIP_NUMS.filter(n => n <= 73);
 const MAX_FLEET = 24;
 
+// Copies allowed of one ship number: 5 skiffs, 3 of the 2, 2 of anything bigger, so a fleet is a
+// mix rather than a flood of one ship. Only rounding off the last point or two may go one over.
+const maxCopies = n => n === 1 ? 5 : n === 2 ? 3 : 2;
+
 /**
  * A random fleet worth about `value`: [ship number, sector] from blue's side. The biggest ship
- * allowed is random too, so some fleets are a swarm of small ships, some a few big ones.
+ * allowed is random too, so some fleets are many small ships, some a few big ones; when the
+ * copy limits fill up under that cap, the next ships up make up the value.
  */
-function randomFleet(value) {
-    const cap = Math.max(1, Math.min(73, Math.round(value * (0.08 + 0.6 * Math.random() ** 1.5))));
+export function openingFleet(value, rng = Math.random) {
+    const pick = a => a[Math.floor(rng() * a.length)];
+    // at least a fifth of the value, so even a small fleet is a mix rather than all skiffs
+    const cap = Math.max(1, Math.ceil(value / 5), Math.min(73, Math.round(value * (0.08 + 0.6 * rng() ** 1.5))));
     const floor = Math.min(cap, Math.max(1, Math.floor(value / MAX_FLEET)));
-    const fleet = [];
+    const fleet = [], copies = {};
     let left = value;
     while (left >= 1 && fleet.length < MAX_FLEET) {
-        const options = FLEET_SHIPS.filter(n => n >= floor && n <= Math.min(cap, left));
+        const free = (n, extra = 0) => n <= left && (copies[n] ?? 0) < maxCopies(n) + extra;
+        let options = FLEET_SHIPS.filter(n => n >= floor && n <= cap && free(n));
+        if (!options.length) options = FLEET_SHIPS.filter(n => n > cap && free(n)).slice(0, 3);
+        if (!options.length) options = FLEET_SHIPS.filter(n => free(n, 1)).slice(-1);
         if (!options.length) break;
         const n = pick(options);
         fleet.push([n, pick([1, 2, 2, 3, 3])]);
+        copies[n] = (copies[n] ?? 0) + 1;
         left -= n;
     }
     return fleet;
@@ -174,7 +183,7 @@ function randomFleet(value) {
 export function seedOpening(state, mods, newId) {
     const m = normalizeMods(mods);
     if (!m.openingValue) return;
-    for (const [num, sector] of randomFleet(m.openingValue)) {
+    for (const [num, sector] of openingFleet(m.openingValue)) {
         for (const owner of ['blue', 'red']) {
             const tpl = TEMPLATES[num];
             state[owner].ships.push({

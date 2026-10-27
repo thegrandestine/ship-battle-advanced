@@ -18,7 +18,7 @@ import { priceMult } from '../../js/economy.js';
 import { clearPriceCache } from '../../js/sim.js';
 import { clearPriceMemos } from '../../js/grandmaster.js';
 import { clearZeroMemos } from '../../js/zero.js';
-import { applyBalanceMods, normalizeMods, chaosMods, standardMods, PRESETS } from '../../js/modifiers.js';
+import { applyBalanceMods, normalizeMods, chaosMods, standardMods, openingFleet, PRESETS } from '../../js/modifiers.js';
 
 const ORIG = Object.fromEntries(SHIP_NUMS.map(n => [n, [TEMPLATES[n].attack, TEMPLATES[n].health]]));
 const PRICE_PRIMES = [2, 3, 7, 17, 19, 23]; // trained on (5, 11, 13 held out)
@@ -284,7 +284,7 @@ function preset(mods, rng) {
     st.income = [m.startIncome, m.startIncome];
     st.ore = [m.startOre, m.startOre];
     st.hp = [m.baseHp, m.baseHp];
-    if (m.openingValue) st.fleet = randomFleet(rng, m.openingValue, [1, 2, 2, 3, 3]);
+    if (m.openingValue) st.fleet = openingFleet(m.openingValue, rng); // the live game's roll
     return st;
 }
 
