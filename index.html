@@ -48,7 +48,7 @@
             <div class="stats-row">
                 <div class="stat-card blue">
                     <div class="left">
-                        <label class="faction">◤ Blue Command <select class="cmd-select" id="blue-ai" title="Who plays blue: you, or an AI that plays itself"></select></label>
+                        <div class="faction cmd-pick">◤ <span id="blue-faction-name">Blue Command</span><select class="cmd-select" id="blue-ai" title="Who plays blue: you, or an AI that plays itself"></select></div>
                         <input type="text" oninput="window.setUsername(this.value)" value="player">
                     </div>
                     <div class="stat-resources">
@@ -61,7 +61,7 @@
                 <input type="text" id="command-line" value="">
                 <div class="stat-card red">
                     <div class="left">
-                        <label class="faction"><select class="cmd-select" id="red-ai" title="Switch red's AI mid-game"></select> Red Command ◥</label>
+                        <div class="faction cmd-pick">Red Command ◥<select class="cmd-select" id="red-ai" title="Switch red's AI mid-game"></select></div>
                         <div class="commander" id="red-command">Opponent · CPU</div>
                     </div>
                     <div class="stat-resources">

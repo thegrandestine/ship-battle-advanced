@@ -353,25 +353,24 @@ header.top {
         color: var(--red);
     }
 
-    .stat-card .cmd-select {
-        appearance: none;
-        background: transparent;
-        border: none;
-        border-bottom: 1px dashed currentColor;
-        padding: 0 2px;
-        font: inherit;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text, #ddd);
-        cursor: pointer;
-        max-width: 22ch;
+    /* The command label is the AI picker: an invisible select laid over it (js/commanders.js) */
+    .stat-card .cmd-pick {
+        position: relative;
+        white-space: nowrap;
     }
 
-        .stat-card .cmd-select:hover,
-        .stat-card .cmd-select:focus-visible {
-            outline: none;
-            color: #fff;
+        .stat-card .cmd-pick:has(.cmd-select:not([hidden])):hover {
+            text-decoration: underline dotted;
+            text-underline-offset: 3px;
         }
+
+    .stat-card .cmd-select {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
 
         .stat-card .cmd-select option {
             background: #161b22;

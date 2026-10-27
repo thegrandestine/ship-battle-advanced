@@ -49,6 +49,7 @@ export function syncCommanders() {
     blue.hidden = state.red.ai === 'pvp';
     const b = blueAI ?? 'player';
     if (blue.value !== b) blue.value = b;
+    document.getElementById('blue-faction-name').textContent = blueAI ? `Blue · ${DIFFICULTIES[blueAI].label}` : 'Blue Command';
 }
 
 const paused = () => ['pause-modal', 'setup-modal', 'formModal']
