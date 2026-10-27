@@ -1,6 +1,6 @@
 import { newGame, setup } from './js/state.js';
 import { DIFFICULTIES } from './js/config.js';
-import { describeMods } from './js/modifiers.js';
+import { describeMods, PRESETS } from './js/modifiers.js';
 import { openSetup, closeSetup, isSetupOpen } from './js/setup.js';
 
 const pauseModal = document.getElementById('pause-modal');
@@ -22,9 +22,9 @@ function setOpen(modal, open) {
 function togglePauseMenu(force) {
     const shouldOpen = force !== undefined ? force : !pauseModal.classList.contains('active');
     if (shouldOpen && pauseOpponent) {
-        const mods = setup.chaos ? ['Chaos (random modifiers)'] : describeMods(setup.mods);
+        const mods = setup.roll ? [`${PRESETS[setup.roll].label} (rolled each game)`] : describeMods(setup.mods);
         pauseOpponent.textContent = DIFFICULTIES[setup.difficulty]?.label ?? setup.difficulty;
-        pauseMods.textContent = mods.length ? mods.join(' · ') : 'Standard rules';
+        pauseMods.textContent = mods.length ? mods.join(' · ') : 'Classic rules';
         pauseMods.classList.toggle('modded', mods.length > 0);
     }
     setOpen(pauseModal, shouldOpen);

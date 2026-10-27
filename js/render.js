@@ -34,7 +34,7 @@ export function render() {
     }
 
     const ml = document.getElementById('mods-line');
-    if (ml) ml.textContent = describeMods(activeMods).join(' · ') || 'Standard';
+    if (ml) ml.textContent = describeMods(activeMods).join(' · ') || 'Classic';
 }
 
 export function renderStats() {

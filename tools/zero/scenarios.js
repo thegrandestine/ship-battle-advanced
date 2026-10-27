@@ -276,7 +276,9 @@ export const EVAL_SCENARIOS = {
         clearMemos();
         return standardStart();
     },
-    ...Object.fromEntries(Object.entries(PRESETS).filter(([k]) => !['standard', 'chaos'].includes(k))
+    // the game's Standard preset (a small mirrored fleet and some money); 'standard' above is Classic
+    newStandard: rng => { resetRules(); return preset(PRESETS.standard.roll(rng), rng); },
+    ...Object.fromEntries(Object.entries(PRESETS).filter(([k, p]) => !p.roll && k !== 'classic')
         .map(([k, p]) => [k, rng => { resetRules(); return preset(p.mods, rng); }])),
 };
 

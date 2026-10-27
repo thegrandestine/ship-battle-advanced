@@ -4,7 +4,7 @@
 
 import { DIFFICULTIES } from './config.js';
 import { startGame } from './state.js';
-import { DEFAULT_MODS, MOD_STEPS, PRICE_PRIMES, PRESETS, normalizeMods, describeMods } from './modifiers.js';
+import { DEFAULT_MODS, MOD_STEPS, PRICE_PRIMES, PRESETS, normalizeMods, describeMods, isDefault } from './modifiers.js';
 
 const STORE_KEY = 'shipbattle.setup';
 
@@ -31,9 +31,14 @@ let draft = loadDraft();
 function loadDraft() {
     try {
         const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-        if (saved && DIFFICULTIES[saved.difficulty]) return { difficulty: saved.difficulty, mods: normalizeMods(saved.mods), chaos: !!saved.chaos };
+        if (saved && DIFFICULTIES[saved.difficulty]) {
+            // Older saves had a `chaos` flag, and plain rules meant Standard (now Classic plus a roll)
+            const roll = 'roll' in saved ? saved.roll
+                : saved.chaos ? 'chaos' : isDefault(saved.mods) ? 'standard' : null;
+            return { difficulty: saved.difficulty, mods: normalizeMods(saved.mods), roll: PRESETS[roll]?.roll ? roll : null };
+        }
     } catch { /* storage unavailable: use defaults */ }
-    return { difficulty: 'normal', mods: normalizeMods(), chaos: false };
+    return { difficulty: 'normal', mods: normalizeMods(), roll: 'standard' };
 }
 
 function saveDraft() {
@@ -82,14 +87,14 @@ function buildPresets() {
     for (const [key, p] of Object.entries(PRESETS)) {
         const o = document.createElement('option');
         o.value = key;
-        o.textContent = `${key === 'chaos' ? '🎲 ' : ''}${p.label} — ${p.desc}`;
+        o.textContent = `${p.roll ? '🎲 ' : ''}${p.label} — ${p.desc}`;
         sel.appendChild(o);
     }
     sel.addEventListener('change', () => {
         const key = sel.value;
         if (!key) return;
-        draft.chaos = key === 'chaos';
-        if (!draft.chaos) draft.mods = normalizeMods(PRESETS[key].mods);
+        draft.roll = PRESETS[key].roll ? key : null;
+        if (!draft.roll) draft.mods = normalizeMods(PRESETS[key].mods);
         refresh();
     });
 }
@@ -141,13 +146,13 @@ function refresh() {
 
     const modsOn = takesMods(draft.difficulty);
     const m = draft.mods;
-    const presetKey = draft.chaos ? 'chaos'
-        : Object.keys(PRESETS).find(k => k !== 'chaos' && JSON.stringify(normalizeMods(PRESETS[k].mods)) === JSON.stringify(m)) ?? '';
+    const presetKey = draft.roll
+        ?? Object.keys(PRESETS).find(k => !PRESETS[k].roll && JSON.stringify(normalizeMods(PRESETS[k].mods)) === JSON.stringify(m)) ?? '';
     const presetSel = document.getElementById('setup-preset');
     presetSel.value = presetKey;
     presetSel.disabled = !modsOn;
 
-    const frozen = draft.chaos || !modsOn;
+    const frozen = !!draft.roll || !modsOn;
     document.getElementById('setup-mods').classList.toggle('disabled', frozen);
     for (const s of SLIDERS) {
         const input = document.querySelector(`#setup-mods input[data-key="${s.key}"]`);
@@ -167,9 +172,10 @@ function refresh() {
     const summary = document.getElementById('setup-summary');
     const active = describeMods(m);
     summary.textContent = !modsOn ? 'This mode plays by its own rules; modifiers are off.'
-        : draft.chaos ? '🎲 2–4 random modifiers, rolled fresh every game.'
-        : active.length ? `Active: ${active.join(' · ')}` : 'Standard rules.';
-    summary.classList.toggle('modded', modsOn && (draft.chaos || active.length > 0));
+        : draft.roll === 'chaos' ? '🎲 2–4 random modifiers, rolled fresh every game.'
+        : draft.roll ? `🎲 ${PRESETS[draft.roll].desc}.`
+        : active.length ? `Active: ${active.join(' · ')}` : 'Classic rules.';
+    summary.classList.toggle('modded', modsOn && (!!draft.roll || active.length > 0));
     saveDraft();
 }
 
@@ -193,12 +199,12 @@ export function initSetup() {
     buildOpponents();
     buildPresets();
     buildMods();
-    document.getElementById('setup-reset').addEventListener('click', () => { draft.chaos = false; draft.mods = normalizeMods(); refresh(); });
+    document.getElementById('setup-reset').addEventListener('click', () => { draft.roll = 'standard'; draft.mods = normalizeMods(); refresh(); });
     document.getElementById('setup-cancel').addEventListener('click', closeSetup);
     document.getElementById('setup-start').addEventListener('click', () => {
         closeSetup();
         const mods = takesMods(draft.difficulty);
-        startGame({ difficulty: draft.difficulty, mods: mods ? draft.mods : DEFAULT_MODS, chaos: mods && draft.chaos });
+        startGame({ difficulty: draft.difficulty, mods: mods ? draft.mods : DEFAULT_MODS, roll: mods ? draft.roll : null });
     });
     refresh();
 }

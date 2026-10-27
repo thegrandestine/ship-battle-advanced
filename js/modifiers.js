@@ -1,6 +1,8 @@
 // Game modifiers: opt-in rule changes chosen on the New Game screen (starting economy, base and
-// ship stats, ship prices per prime, a random mirrored fleet already on the field). A standard
-// game uses DEFAULT_MODS, which leaves every value exactly as in config.js / templates.js.
+// ship stats, ship prices per prime, a random mirrored fleet already on the field). A classic
+// game uses DEFAULT_MODS, which leaves every value exactly as in config.js / templates.js. The
+// Standard preset rolls a small mirrored fleet and some starting money each game, so no two
+// boards open the same way.
 //
 // Ship stats and prices are changed where the rules read them (TEMPLATES and cost()), so the
 // AIs' lookahead (js/sim.js) plays by the same modified rules as the live game.
@@ -37,8 +39,18 @@ export const DEFAULT_MODS = {
     openingValue: 0,                                      // total value of the random opening fleet
 };
 
+/** The Standard preset's roll: a mirrored fleet worth 10-20 and 0-20 money, fresh each game. */
+export function standardMods(rng = Math.random) {
+    const m = normalizeMods();
+    m.openingValue = 10 + Math.floor(rng() * 11);
+    m.startMoney = Math.floor(rng() * 21);
+    return m;
+}
+
+// A preset with `roll` (mods: null) rolls its modifiers fresh every game.
 export const PRESETS = {
-    standard: { label: 'Standard', desc: 'The usual rules', mods: {} },
+    standard: { label: 'Standard', desc: 'A random mirrored fleet worth 10–20 and 0–20 money, rolled each game', mods: null, roll: standardMods },
+    classic: { label: 'Classic', desc: 'The original rules: empty field, no money', mods: {} },
     blitz: { label: 'Blitz', desc: 'Base HP 40, 20 money up front', mods: { baseHp: 40, startMoney: 20 } },
     suddenDeath: { label: 'Sudden Death', desc: 'Base HP 1: the first hit wins', mods: { baseHp: 1 } },
     glass: { label: 'Glass Cannons', desc: 'Ships have a quarter of their HP', mods: { shipHp: 0.25 } },
@@ -48,7 +60,7 @@ export const PRESETS = {
     oreRush: { label: 'Ore Rush', desc: 'Miners (×3) half price', mods: { primePrice: { 3: 0.5 } } },
     missiles: { label: 'Missile Season', desc: 'Missile ships (×5) a quarter price, half HP everywhere', mods: { primePrice: { 5: 0.25 }, shipHp: 0.5 } },
     warzone: { label: 'Warzone', desc: 'A big random fleet each, already on the field', mods: { openingValue: 350 } },
-    chaos: { label: 'Chaos', desc: 'Random modifiers every game', mods: null },
+    chaos: { label: 'Chaos', desc: 'Random modifiers every game', mods: null, roll: chaosMods },
 };
 
 const ORIGINAL = Object.fromEntries(SHIP_NUMS.map(n => [n, { attack: TEMPLATES[n].attack, health: TEMPLATES[n].health }]));

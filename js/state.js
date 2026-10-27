@@ -2,7 +2,7 @@ import { DIFFICULTIES } from './config.js';
 import { sfx } from './audio.js';
 import { render, renderDeployBar, renderShortcutBar, resetDeployBar } from './render.js';
 import {showTutorial} from '../script.js';
-import { DEFAULT_MODS, chaosMods, normalizeMods, isDefault, describeMods, applyBalanceMods, seedOpening } from './modifiers.js';
+import { DEFAULT_MODS, PRESETS, normalizeMods, isDefault, describeMods, applyBalanceMods, seedOpening } from './modifiers.js';
 
 export let state = null;
 export let nextShipId = 1;
@@ -13,9 +13,9 @@ export let socket = null;
 export let username = "player";
 export let opponent = "ai";
 export let difficulty = 'normal';
-// What the New Game screen chose: an opponent (a DIFFICULTIES key) and modifiers. `chaos` rolls
-// fresh random modifiers on every (re)start. Restart replays the same setup.
-export let setup = { difficulty: 'normal', mods: { ...DEFAULT_MODS }, chaos: false };
+// What the New Game screen chose: an opponent (a DIFFICULTIES key) and modifiers. `roll` names a
+// preset that rolls fresh modifiers on every (re)start (Standard, Chaos). Restart replays the setup.
+export let setup = { difficulty: 'normal', mods: { ...DEFAULT_MODS }, roll: 'standard' };
 export let activeMods = { ...DEFAULT_MODS };
 
 export function setProcessing(val) { processing = val; }
@@ -66,9 +66,9 @@ export function startNewTurn() {
     }
 }
 
-/** Starts a game with this setup ({ difficulty, mods, chaos }) and keeps it for restarts. */
+/** Starts a game with this setup ({ difficulty, mods, roll }) and keeps it for restarts. */
 export function startGame(newSetup) {
-    setup = { difficulty: newSetup.difficulty, mods: normalizeMods(newSetup.mods), chaos: !!newSetup.chaos };
+    setup = { difficulty: newSetup.difficulty, mods: normalizeMods(newSetup.mods), roll: PRESETS[newSetup.roll]?.roll ? newSetup.roll : null };
     newGame();
 }
 
@@ -76,7 +76,7 @@ export function newGame(handicap) {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
 
     difficulty = setup.difficulty;
-    let mods = setup.chaos ? chaosMods() : setup.mods;
+    let mods = setup.roll ? PRESETS[setup.roll].roll() : setup.mods;
 
     if (handicap !== undefined) {
         // Imported games replay standard rules.
