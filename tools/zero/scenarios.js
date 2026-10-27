@@ -197,7 +197,7 @@ function lopsided(rng, st) {
 }
 
 // Training families and their shares (the rest of a draw is the standard game).
-// Plain games: the game's Standard preset (a mirrored 10-20 fleet, 0-20 money), with this share
+// Plain games: the game's Standard preset (a mirrored 0-20 fleet, 0-20 money), with this share
 // of them the Classic empty board, which a pair of fixed openings turns into a coin toss.
 const CLASSIC_SHARE = 0.25;
 export const TRAIN_FAMILIES = {
