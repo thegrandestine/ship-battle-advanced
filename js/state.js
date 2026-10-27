@@ -76,7 +76,7 @@ export function newGame(handicap) {
     document.querySelectorAll('.modal-backdrop').forEach(m => m.remove());
 
     difficulty = setup.difficulty;
-    let mods = setup.roll ? PRESETS[setup.roll].roll() : setup.mods;
+    let mods = setup.roll ? PRESETS[setup.roll].roll(Math.random, setup.mods) : setup.mods;
 
     if (handicap !== undefined) {
         // Imported games replay standard rules.

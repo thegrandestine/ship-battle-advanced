@@ -94,9 +94,18 @@ function buildPresets() {
         const key = sel.value;
         if (!key) return;
         draft.roll = PRESETS[key].roll ? key : null;
-        if (!draft.roll) draft.mods = normalizeMods(PRESETS[key].mods);
+        draft.mods = normalizeMods(PRESETS[key].mods);
         refresh();
     });
+}
+
+/** Modifiers a rolled preset sets each game (all of them for Chaos). */
+const rolledKeys = () => draft.roll ? PRESETS[draft.roll].rolls ?? 'all' : [];
+
+/** Setting a modifier the selected preset rolls switches to fixed settings; the rest layer on top. */
+function takeOver(key) {
+    const rolled = rolledKeys();
+    if (rolled === 'all' || rolled.includes(key)) draft.roll = null;
 }
 
 /** Index of the allowed value closest to v. */
@@ -113,7 +122,7 @@ function buildMods() {
         row.querySelector('.setup-mod-label').textContent = s.label;
         const input = row.querySelector('input');
         input.dataset.key = s.key;
-        input.addEventListener('input', () => { draft.mods[s.key] = steps[Number(input.value)]; refresh(); });
+        input.addEventListener('input', () => { takeOver(s.key); draft.mods[s.key] = steps[Number(input.value)]; refresh(); });
         box.appendChild(row);
     }
 
@@ -131,6 +140,7 @@ function buildMods() {
         for (const v of MOD_STEPS.price) sel.add(new Option(pct(v), v));
         sel.addEventListener('change', () => {
             const v = Number(sel.value);
+            takeOver('price');
             if (p === 'all') draft.mods.priceAll = v; else draft.mods.primePrice[p] = v;
             refresh();
         });
@@ -146,20 +156,22 @@ function refresh() {
 
     const modsOn = takesMods(draft.difficulty);
     const m = draft.mods;
-    const presetKey = draft.roll
-        ?? Object.keys(PRESETS).find(k => !PRESETS[k].roll && JSON.stringify(normalizeMods(PRESETS[k].mods)) === JSON.stringify(m)) ?? '';
+    const presetKey = draft.roll ? (draft.roll === 'chaos' || isDefault(m) ? draft.roll : '')
+        : Object.keys(PRESETS).find(k => !PRESETS[k].roll && JSON.stringify(normalizeMods(PRESETS[k].mods)) === JSON.stringify(m)) ?? '';
     const presetSel = document.getElementById('setup-preset');
     presetSel.value = presetKey;
     presetSel.disabled = !modsOn;
 
-    const frozen = !!draft.roll || !modsOn;
+    const frozen = !modsOn;
+    const rolled = rolledKeys();
     document.getElementById('setup-mods').classList.toggle('disabled', frozen);
     for (const s of SLIDERS) {
         const input = document.querySelector(`#setup-mods input[data-key="${s.key}"]`);
+        const isRolled = rolled === 'all' || rolled.includes(s.key);
         input.value = nearest(MOD_STEPS[s.key], m[s.key]);
         input.disabled = frozen;
-        input.nextElementSibling.textContent = (s.fmt ?? String)(m[s.key]);
-        input.closest('.setup-mod').classList.toggle('changed', m[s.key] !== DEFAULT_MODS[s.key]);
+        input.nextElementSibling.textContent = !isRolled ? (s.fmt ?? String)(m[s.key]) : rolled === 'all' ? '🎲' : '🎲 0–20';
+        input.closest('.setup-mod').classList.toggle('changed', isRolled || m[s.key] !== DEFAULT_MODS[s.key]);
     }
     document.querySelectorAll('.setup-price select').forEach(sel => {
         const p = sel.dataset.prime;
@@ -173,7 +185,7 @@ function refresh() {
     const active = describeMods(m);
     summary.textContent = !modsOn ? 'This mode plays by its own rules; modifiers are off.'
         : draft.roll === 'chaos' ? '🎲 2–4 random modifiers, rolled fresh every game.'
-        : draft.roll ? `🎲 ${PRESETS[draft.roll].desc}.`
+        : draft.roll ? `🎲 ${PRESETS[draft.roll].desc}.${active.length ? ` Plus: ${active.join(' · ')}` : ''}`
         : active.length ? `Active: ${active.join(' · ')}` : 'Classic rules.';
     summary.classList.toggle('modded', modsOn && (!!draft.roll || active.length > 0));
     saveDraft();

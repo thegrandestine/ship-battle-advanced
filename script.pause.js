@@ -22,7 +22,8 @@ function setOpen(modal, open) {
 function togglePauseMenu(force) {
     const shouldOpen = force !== undefined ? force : !pauseModal.classList.contains('active');
     if (shouldOpen && pauseOpponent) {
-        const mods = setup.roll ? [`${PRESETS[setup.roll].label} (rolled each game)`] : describeMods(setup.mods);
+        const mods = setup.roll === 'chaos' ? ['Chaos (rolled each game)']
+            : setup.roll ? [`${PRESETS[setup.roll].label} (rolled each game)`, ...describeMods(setup.mods)] : describeMods(setup.mods);
         pauseOpponent.textContent = DIFFICULTIES[setup.difficulty]?.label ?? setup.difficulty;
         pauseMods.textContent = mods.length ? mods.join(' · ') : 'Classic rules';
         pauseMods.classList.toggle('modded', mods.length > 0);

@@ -39,17 +39,21 @@ export const DEFAULT_MODS = {
     openingValue: 0,                                      // total value of the random opening fleet
 };
 
-/** The Standard preset's roll: a mirrored fleet worth 0-20 and 0-20 money, fresh each game (0 and 0 is the Classic board). */
-export function standardMods(rng = Math.random) {
-    const m = normalizeMods();
+/**
+ * The Standard preset's roll: a mirrored fleet worth 0-20 and 0-20 money, fresh each game (0 and 0
+ * is the Classic board), on top of `base` (any other modifiers the player set).
+ */
+export function standardMods(rng = Math.random, base) {
+    const m = normalizeMods(base);
     m.openingValue = Math.floor(rng() * 21);
     m.startMoney = Math.floor(rng() * 21);
     return m;
 }
 
-// A preset with `roll` (mods: null) rolls its modifiers fresh every game.
+// A preset with `roll` (mods: null) rolls its modifiers fresh every game; `rolls` lists the ones
+// it owns, and the player's other modifiers apply on top (Chaos owns them all).
 export const PRESETS = {
-    standard: { label: 'Standard', desc: 'A random mirrored fleet worth 0–20 and 0–20 money, rolled each game', mods: null, roll: standardMods },
+    standard: { label: 'Standard', desc: 'A random mirrored fleet worth 0–20 and 0–20 money, rolled each game', mods: null, roll: standardMods, rolls: ['startMoney', 'openingValue'] },
     classic: { label: 'Classic', desc: 'The original rules: empty field, no money', mods: {} },
     blitz: { label: 'Blitz', desc: 'Base HP 40, 20 money up front', mods: { baseHp: 40, startMoney: 20 } },
     suddenDeath: { label: 'Sudden Death', desc: 'Base HP 1: the first hit wins', mods: { baseHp: 1 } },

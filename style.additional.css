@@ -540,7 +540,7 @@
 
 .setup-mod {
 	display: grid;
-	grid-template-columns: 110px 1fr 4.5ch;
+	grid-template-columns: 110px 1fr 7ch;
 	align-items: center;
 	gap: 8px;
 	min-height: 28px;
@@ -557,6 +557,7 @@
 
 	.setup-mod output {
 		text-align: right;
+		white-space: nowrap;
 		font-family: 'JetBrains Mono', monospace;
 		color: #f0f6fc;
 	}
@@ -605,7 +606,7 @@
 
 @media (max-width: 640px) {
 	.setup-mods { grid-template-columns: 1fr; }
-	.setup-mod { grid-template-columns: 110px 1fr 4.5ch; }
+	.setup-mod { grid-template-columns: 110px 1fr 7ch; }
 	.setup-prices { grid-template-columns: 1fr; }
 }
 
