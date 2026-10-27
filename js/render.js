@@ -6,6 +6,7 @@ import { cost, calcOreIncome, excessExponent, oreDivisor, maxLoanFor, balance } 
 import { shipNumBg, shipStripGradient } from './visuals.js';
 import { hideTip } from './tooltips.js';
 import { runTurn } from './combat.js';
+import { syncCommanders } from './commanders.js';
 
 const shipElements = new Map();
 // Height a sector column has for stacking ships (from the battlefield's height, at least 240):
@@ -43,6 +44,7 @@ export function renderStats() {
     document.getElementById('red-money').textContent = `${state.red.money.toFixed(2)} (+${state.red.income})`;
     document.getElementById('red-ore').textContent = `${state.red.ore} (+${calcOreIncome('red', state)})`;
     document.getElementById('red-command').textContent = opponent;
+    syncCommanders();
 }
 
 export function getShipPosition(ship, allShips) {

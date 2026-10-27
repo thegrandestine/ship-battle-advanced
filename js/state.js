@@ -17,11 +17,28 @@ export let difficulty = 'normal';
 // preset that rolls fresh modifiers on every (re)start (Standard, Chaos). Restart replays the setup.
 export let setup = { difficulty: 'normal', mods: { ...DEFAULT_MODS }, roll: 'standard' };
 export let activeMods = { ...DEFAULT_MODS };
+// A DIFFICULTIES key while an AI plays blue (autoplay, js/commanders.js); null: the player. Kept across restarts.
+export let blueAI = null;
 
 export function setProcessing(val) { processing = val; }
 export function setGameOver(val) { gameOver = val; }
 export function setSpeedMult(val) { speedMult = val; }
 export function setUsername(val) { username = val; }
+export function setBlueAI(key) { blueAI = key; }
+
+/** Hands red to another AI mid-game, and for restarts. Base, money, ore and ships stay as they are. */
+export function setRedAI(key) {
+    const D = DIFFICULTIES[key];
+    difficulty = setup.difficulty = key;
+    Object.assign(state.red, {
+        ai: D.ai ?? false, armor_gain: D.armorGain ?? 0, regen: D.regen, ore_boost: D.oreMult ?? 1,
+        ore_delay: D.oreDelay ?? 0, priority: D.priority ?? [], opening: D.opening ?? [],
+    });
+    delete state.red.gmMemo;
+    opponent = `ai - ${D.label}${state.modded ? ' · modded' : ''}`;
+    log(`RED command passes to ${D.label}.`, 'red');
+    render();
+}
 export function incrementShipId() { return nextShipId++; }
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms / speedMult));

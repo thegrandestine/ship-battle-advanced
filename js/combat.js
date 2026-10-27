@@ -341,6 +341,25 @@ export async function finishCleanup() {
     endGame();
 }
 
+/**
+ * `side`'s pick by the AI behind DIFFICULTIES[key], for the AIs that can play either side
+ * (Grandmaster, Alpha); undefined for any other. Blue's autoplay (js/commanders.js) uses it too.
+ */
+export function pickFor(side, key) {
+    const D = DIFFICULTIES[key];
+    if (D?.ai === 'grandmaster') {
+        // The book holds lessons from standard games; with modifiers its moves would be misleading.
+        let cfg = D.gmCfg;
+        if (state.modded && cfg?.book) cfg = { ...cfg, book: false };
+        return chooseGrandmaster(state, side, { cfg, memo: (state[side].gmMemo ??= {}) });
+    }
+    if (D?.ai === 'zero' && ZERO_WEIGHTS) {
+        // It reads the board, not the other side's pick.
+        // Near-best sampling: a replayed game can't map out one fixed line (see LIVE_VARIETY).
+        return chooseZero(state, side, (zeroNet ??= loadNet(ZERO_WEIGHTS)), { variety: LIVE_VARIETY });
+    }
+}
+
 export async function runTurn(playerPick = 0) {
     if (processing || gameOver) return;
     setProcessing(true);
@@ -352,16 +371,9 @@ export async function runTurn(playerPick = 0) {
         aiPick = parseInt(await getNextMessage(), 10);
     } else if (state.red.ai === "daily") {
         aiPick = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37][state.turn - 1] ?? 0;
-    } else if (state.red.ai === "grandmaster") {
+    } else if (state.red.ai === "grandmaster" || state.red.ai === "zero") {
         // Decided before blue's purchase below, so it never sees this turn's pick.
-        // The book holds lessons from standard games; with modifiers its moves would be misleading.
-        let cfg = DIFFICULTIES[difficulty]?.gmCfg;
-        if (state.modded && cfg?.book) cfg = { ...cfg, book: false };
-        aiPick = chooseGrandmaster(state, 'red', { cfg, memo: (state.red.gmMemo ??= {}) });
-    } else if (state.red.ai === "zero" && ZERO_WEIGHTS) {
-        // Also decided before blue's purchase; it reads the board, not blue's pick.
-        // Near-best sampling: a replayed game can't map out one fixed line (see LIVE_VARIETY).
-        aiPick = chooseZero(state, 'red', (zeroNet ??= loadNet(ZERO_WEIGHTS)), { variety: LIVE_VARIETY });
+        aiPick = pickFor('red', difficulty);
     }
     for (const num of state.red.priority){
         if (aiPick === undefined && canAfford('red', num)) {aiPick = num;}

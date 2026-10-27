@@ -353,6 +353,32 @@ header.top {
         color: var(--red);
     }
 
+    .stat-card .cmd-select {
+        appearance: none;
+        background: transparent;
+        border: none;
+        border-bottom: 1px dashed currentColor;
+        padding: 0 2px;
+        font: inherit;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text, #ddd);
+        cursor: pointer;
+        max-width: 22ch;
+    }
+
+        .stat-card .cmd-select:hover,
+        .stat-card .cmd-select:focus-visible {
+            outline: none;
+            color: #fff;
+        }
+
+        .stat-card .cmd-select option {
+            background: #161b22;
+            color: #ddd;
+            text-transform: none;
+        }
+
     .stat-card .commander {
         font-size: 10px;
         color: var(--muted);
