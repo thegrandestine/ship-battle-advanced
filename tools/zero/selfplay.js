@@ -5,7 +5,7 @@
 // opponent (chance --ppool), or grandmaster v1.2 (chance --pgm: slow, ~7s a game, so keep it to
 // a few percent; its thinking is capped at --gm-ms per move, 150 by default, v1.2 otherwise); then only the current net's moves are kept. Each game's first
 // 0..--open turns are random moves (not kept), so no two games start alike.
-// --std: share of plain standard games; the rest draw a training scenario (tools/zero/scenarios.js:
+// --std: share of plain games (Standard, a quarter Classic); the rest draw a training scenario (tools/zero/scenarios.js:
 // nudged stats and prices, mid-fight mirrored fleets with low bases, rich starts, econ tweaks).
 // The shuffles only live inside this process's copy of the rules; nothing is saved.
 // --draw: weight of the tie-break score for games that hit a cap (see adjudicate).

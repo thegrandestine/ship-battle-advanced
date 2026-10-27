@@ -18,7 +18,7 @@ import { priceMult } from '../../js/economy.js';
 import { clearPriceCache } from '../../js/sim.js';
 import { clearPriceMemos } from '../../js/grandmaster.js';
 import { clearZeroMemos } from '../../js/zero.js';
-import { applyBalanceMods, normalizeMods, chaosMods, PRESETS } from '../../js/modifiers.js';
+import { applyBalanceMods, normalizeMods, chaosMods, standardMods, PRESETS } from '../../js/modifiers.js';
 
 const ORIG = Object.fromEntries(SHIP_NUMS.map(n => [n, [TEMPLATES[n].attack, TEMPLATES[n].health]]));
 const PRICE_PRIMES = [2, 3, 7, 17, 19, 23]; // trained on (5, 11, 13 held out)
@@ -197,6 +197,9 @@ function lopsided(rng, st) {
 }
 
 // Training families and their shares (the rest of a draw is the standard game).
+// Plain games: the game's Standard preset (a mirrored 10-20 fleet, 0-20 money), with this share
+// of them the Classic empty board, which a pair of fixed openings turns into a coin toss.
+const CLASSIC_SHARE = 0.25;
 export const TRAIN_FAMILIES = {
     jitter: 0.12,   // nudged ship stats and prime prices
     midfight: 0.15, // mirrored fleets on the field, low bases, cash in hand
@@ -211,11 +214,16 @@ export const TRAIN_FAMILIES = {
     chaos: 0.06,    // the Chaos preset's roll: 2-4 knobs anywhere on their sliders, extremes included
 };
 
-/** A training scenario; `std` = chance of a plain standard game. Returns { start, family }. */
+/** A training scenario; `std` = chance of a plain (Standard or Classic) game. Returns { start, family }. */
 export function trainingScenario(rng, std = 0.25) {
     resetRules();
     const st = standardStart();
-    if (rng() < std) return { start: st, family: 'standard' };
+    if (rng() < std) {
+        if (rng() < CLASSIC_SHARE) return { start: st, family: 'classic' };
+        const start = preset(standardMods(rng), rng);
+        clearMemos();
+        return { start, family: 'standard' };
+    }
     const fams = Object.entries(TRAIN_FAMILIES);
     let r = rng() * fams.reduce((a, [, w]) => a + w, 0), family = fams[0][0];
     for (const [f, w] of fams) { if (r < w) { family = f; break; } r -= w; }
@@ -253,12 +261,14 @@ function preset(mods, rng) {
 }
 
 /** 'near' tests are fresh draws from what training sees; 'far' ones it never trains on. */
-export const NEAR = ['standard', 'midfight', 'econ', 'jitter', 'wide', 'mirror', 'fortress', 'glass', 'juggernaut', 'bank', 'chaos'];
+export const NEAR = ['standard', 'classic', 'midfight', 'econ', 'jitter', 'wide', 'mirror', 'fortress', 'glass', 'juggernaut', 'bank', 'chaos'];
 
 // Held-out tests. Presets are the game's own New Game options, mostly far more extreme than
 // anything in training; 'midfight' and 'econ' are fresh draws from training families.
 export const EVAL_SCENARIOS = {
-    standard: () => { resetRules(); return standardStart(); },
+    // the game's Standard preset: the baseline, which decides which net is stronger
+    standard: rng => { resetRules(); return preset(standardMods(rng), rng); },
+    classic: () => { resetRules(); return standardStart(); },
     midfight: rng => { resetRules(); const st = standardStart(); midfight(rng, st); clearMemos(); return st; },
     econ: rng => { resetRules(); econRules(rng); clearMemos(); return standardStart(); },
     jitter: rng => { resetRules(); jitterRules(rng); clearMemos(); return standardStart(); },
@@ -276,8 +286,6 @@ export const EVAL_SCENARIOS = {
         clearMemos();
         return standardStart();
     },
-    // the game's Standard preset (a small mirrored fleet and some money); 'standard' above is Classic
-    newStandard: rng => { resetRules(); return preset(PRESETS.standard.roll(rng), rng); },
     ...Object.fromEntries(Object.entries(PRESETS).filter(([k, p]) => !p.roll && k !== 'classic')
         .map(([k, p]) => [k, rng => { resetRules(); return preset(p.mods, rng); }])),
 };

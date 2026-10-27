@@ -4,7 +4,7 @@
 //   node tools/zero/robust.js <A> <B> [games per scenario=40] [--a '{cfg}'] [--b '{cfg}']
 //        [--scen standard,midfight,...] [--open 2] [--max 200] [--seed 1] [--threads N] [--json]
 // Bots as in tools/tourney.js (zero, gm, gm3, normal, ...). Grandmaster plays every scenario by
-// its rules (its lookahead runs on the same modified sim); gm3's book is off outside 'standard',
+// its rules (its lookahead runs on the same modified sim); gm3's book is off outside 'classic',
 // as in the live game. A plays red in even games, blue in odd ones. --open N: both sides play
 // random moves for the first 0..N turns, so deterministic bots still play distinct games.
 
@@ -19,7 +19,7 @@ import { mulberry32 } from '../rng.js';
 import { EVAL_SCENARIOS, NEAR, applyStart, resetRules, MAX_SHIPS } from './scenarios.js';
 
 function botFor(name, cfg, scen, cache) {
-    const key = name === 'gm3' && scen !== 'standard' ? 'gm3-nobook' : name;
+    const key = name === 'gm3' && scen !== 'classic' ? 'gm3-nobook' : name;
     if (!cache[key]) {
         cache[key] = key === 'gm3-nobook'
             ? grandmasterBot({ ...DIFFICULTIES.grandmasterV3.gmCfg, book: false })

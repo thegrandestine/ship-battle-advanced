@@ -128,8 +128,10 @@ game that went long. The fix is to make every game a slightly different game:
   of higher-tier units with lots of money and a full menu of options. There is no opening book
   for a position you have never seen; the side with the better *plan* breaks the mirror. This
   is where strategic, rather than tactical, understanding comes from.
-- **Mostly the real game.** About a quarter of games are the plain standard game, and the
-  standard game decides which version is stronger. Noise is a teacher, not the target.
+- **Mostly the real game.** About a quarter of games are the plain game: three in four the
+  Standard board (a small random mirrored fleet and some money, so no two games open alike),
+  one in four the Classic empty board. Standard decides which version is stronger. Noise is a
+  teacher, not the target.
 - **Small doses of genuinely different variants.** Extreme modes (5x unit HP, quarter HP)
   play differently enough that a large share teaches habits the real game punishes. A few
   percent of them does teach transferable lessons: a dose of very long games is what finally
